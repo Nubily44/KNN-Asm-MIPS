@@ -13,7 +13,7 @@
     v_xTest: .space 40000
     
     dezDouble: .double 10.0 
-    zero: .double 0.0
+    zeroDouble: .double 0.0
     
     #masValue: .double 999999999999999
 
@@ -52,7 +52,7 @@ lerArquivo:
     li $a1, 0 # Flag 0: Read-only
     li $a2, 0 # Modo que libera as permissoes de acesso
     syscall # Salva o descritor do arquivo em v0 
-    addiu $a0, $v0, $zero # Move o descritor do arquivo (obtido com o syscall 13)
+    addiu $a0, $v0, 0 # Move o descritor do arquivo (obtido com o syscall 13)
 
     # Carrega o arquivo no buffer
     li $v0, 14
@@ -73,8 +73,8 @@ processarNum:
     la $s0, ($a3) # Carrega o endereco do vetor onde os valores serao armazenados
     la $s1, buffer # Carrega o buffer em si
     li $t1, 0 # Inicializa o registrador que irá conter o número copiado
-    l.d $f10, $dezDouble # Inicializa o registrador com 10.0 - NÃO PODE USAR,  TROCAR DEPOIS
-    l.d $f2, $zeroDouble # Inicializa o registrador com 0.0 - NÃO PODE USAR, TROCAR DEPOIS
+    l.d $f10, dezDouble # Inicializa o registrador com 10.0 - NÃO PODE USAR,  TROCAR DEPOIS
+    l.d $f2, zeroDouble # Inicializa o registrador com 0.0 - NÃO PODE USAR, TROCAR DEPOIS
     
     
 # Copia dos numeros
@@ -104,7 +104,7 @@ leituraDecimal:
     
     addiu $t3, $t3, 1 # Incrementa o contador de casas decimais
     
-    li $t4, $t4, 0 # Inicializa a variavel do controle do loop a seguir
+    li $t4, 0 # Inicializa a variavel do controle do loop a seguir
     
     # Loop que divide o valor inteiro por múltiplos 10 para obter o valor decimal correto
     loopDivisao:
@@ -134,7 +134,7 @@ fimNumero:
     li $t2, 0
     li $t3, 0
     l.d $f0, zeroDouble
-    l.d $f2, $zeroDouble
+    l.d $f2, zeroDouble
     
     j fimCaractere # Avança para o próximo número
       
