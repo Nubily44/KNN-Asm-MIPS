@@ -73,9 +73,9 @@ lerArquivo:
 processarNum:
     la $s0, ($a3) # Carrega o endereco do vetor onde os valores serao armazenados
     la $s1, buffer # Carrega o buffer em si
-    li $t1, 0 # Inicializa o registrador que ir� conter o n�mero copiado
-    l.d $f10, dezDouble # Inicializa o registrador com 10.0 - N�O PODE USAR,  TROCAR DEPOIS
-    l.d $f0, zeroDouble # Inicializa o registrador com 0.0 - N�O PODE USAR, TROCAR DEPOIS
+    li $t1, 0 # Inicializa o registrador que irá conter o número copiado
+    l.d $f10, dezDouble # Inicializa o registrador com 10.0 - NÃO PODE USAR,  TROCAR DEPOIS
+    l.d $f0, zeroDouble # Inicializa o registrador com 0.0 - NÃO PODE USAR, TROCAR DEPOIS
     
 
 copiaNumero:
@@ -105,15 +105,15 @@ leituraDecimal:
     j fimCaractere
 
 fimCaractere:
-    addiu $s1, $s1, 1 # Avan�a o buffer para o pr�ximo byte
-    j copiaNumero # Vai para a pr�xima itera��o do loop
+    addiu $s1, $s1, 1 # Avança o buffer para o próximo byte
+    j copiaNumero # Vai para a próxima iteração do loop
 
 fimNumero:
-    # Converte a parte inteira para double - PODEMOS DESDE O IN�CIO SOMAR E SALVAR COMO DOUBLE
+    # Converte o número para double
     mtc1 $t1, $f2
     cvt.d.w $f2, $f2
     
-    li $t4, 1 # Inicializa a variavel do controle do loop a seguir
+    li $t4, 1 # Inicializa a variável do controle do loop a seguir
 
     loopConversao:
         addiu $t4, $t4, 1
@@ -122,14 +122,17 @@ fimNumero:
     
     s.d $f2, 0($s0) # Guarda o valor no vetor
     
+
     # TESTE-Imprime o valor
     #move $a0, $s0 # We can pass the address of the array element that contains the double value
     #l.d $f12, 0($a0) # Load the double value from memory to $f12
     #li $v0, 3 # Syscall code for printing a floating-point number
     #syscall
-    addiu $s0, $s0, 8 # Avan�a para a pr�xima posi��o do vetor
 
-    # Redefine as vari�veis
+
+    addiu $s0, $s0, 8 # Avança para a próxima posição do vetor
+
+    # Redefine as variáveis
     li $t1, 0
     li $t2, 0
     li $t3, 0
@@ -146,9 +149,9 @@ fimArquivo:
     li $t1, 200000
 
     limparBuffer:
-        sb $zero, 0($t0)
+        sb $zero, 0($t0) # limpa o buffer
         addiu $t0, $t0, 1
-        sub $t1, $t1, 1
+        sub $t1, $t1, 1        
         bne $t1, 0, limparBuffer
     
     jr $ra
