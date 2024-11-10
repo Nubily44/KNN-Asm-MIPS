@@ -146,7 +146,7 @@ fimArquivo:
     s.d $f2, 0($s0) # Guarda o valor no vetor
 
     la $t0, buffer
-    li $t1, bufferSize
+    lw $t1, bufferSize
 
     limparBuffer:
         sb $zero, 0($t0) # limpa o buffer
