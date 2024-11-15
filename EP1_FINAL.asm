@@ -5,12 +5,15 @@
     yTest: .asciiz "Ytest.txt" # Localizacao do arquivo de entrada (y) do conjunto de teste
     espaco: .asciiz " "
     newline: .asciiz "\n"
+    YTRAIN: .asciiz "\n\n\n\n\n\nY TRAAIIIIIIIIIIIIIIINNNNNNNNNNNNN \n\n\n\n\n"
+    Xtest: .asciiz "\n\n\n\n XTESTEEEEEEEEEE: \n\n\n\n "
     buffer: .space 200000
+    tamVetor: .word 479
     .align 3
     v_xTrain: .space 40000
     v_yTrain: .space 40000
     v_xTest: .space 40000
-
+    v_yTest: .space 40000
     
     bufferSize: .word 200000
     dezDouble: .double 10.0 
@@ -47,12 +50,39 @@ main:
     lw $a1, 0($sp)       # restaura $a1
     lw $ra, 8($sp)      # restaura $ra
     addi $sp, $sp, 16    # libera o espaço alocado na pilha
+    
+    addi $sp, $sp, -16   # reserva espaço para 4 palavras (4 * 4 bytes)
+    sw $ra, 8($sp)      # salva o registrador de retorno (link) na pilha
+    sw $a1, 0($sp)       # salva $a1 na pilha
+    
+    la $a1, v_yTrain
+    jal carregaYtrain 
+    
+    lw $a1, 0($sp)       # restaura $a1
+    lw $ra, 8($sp)      # restaura $ra
+    addi $sp, $sp, 16    # libera o espaço alocado na pilha
+    
+    la $a0, xTest
+    la $a3, v_xTest
+    jal lerArquivo
+    
+    la $a0, Xtest
+    li $v0, 4
+    syscall
+    
+    addi $sp, $sp, -16   # reserva espaço para 4 palavras (4 * 4 bytes)
+    sw $ra, 8($sp)      # salva o registrador de retorno (link) na pilha
+    sw $a1, 0($sp)       # salva $a1 na pilha
+
+    la $a1,  m_xTrain
+    jal carregaMatriz
+    
+    lw $a1, 0($sp)       # restaura $a1
+    lw $ra, 8($sp)      # restaura $ra
+    addi $sp, $sp, 16    # libera o espaço alocado na pilha
 	
     
-    #la $a0, xTest
-    #la $a3, v_xTest
-    #jal lerArquivo
-
+    
     #la $a0, yTrain
     #la $a3, v_yTrain
     #jal lerArquivo
@@ -149,6 +179,62 @@ fimImpressao:
     lw $ra, 0($sp)      # Restaura o endereço de retorno
     addiu $sp, $sp, 4
     jr $ra              # retorna para o caller
+
+
+# Função que carrega o Ytrain.
+carregaYtrain:
+    addi $sp, $sp, -24
+    sw $ra, 20($sp)
+    sw $a3, 16($sp)
+    sw $a1, 12($sp)
+    la $a0, YTRAIN
+    li $v0, 4
+    syscall
+    
+    li $t0, 0 # i = 0
+    lw $t8, w #t1 = o valor de w 
+    lw $t3, tamVetor
+    subu $t3, $t3, $t8 # tamanho do vetor Y
+YtrainLOOP:
+    li $v0, 1
+    move $a0, $t0
+    syscall
+    la $a0, espaco
+    li $v0, 4
+    syscall
+    
+    addu $t2, $t8, $t0 # x + w
+    slt $t1, $t0, $t3 # comparando i com tamanho da linha - w
+    beq $t1, $zero, fimYtrainFunction
+    sll $t4, $t2, 3
+    addu $a3, $a3, $t4 # endereçp [i + w] * 8
+    l.d $f8, 0($a3) 
+    sll $t5, $t0, 3  # endereço base = i * 8
+    addu $a1, $t5, $a1 # base = i * 8
+    s.d $f8, 0($a1) # salvo o valor da palavra que está em Xtrain[w+i] no Ytrain [i]
+    l.d $f12, 0($a1)    # carrega o valor em f12 para impressão
+    # código para imprimir double
+    li $v0, 3           
+    syscall
+    addi $t0, $t0, 1
+    
+    # imprimindo \n 
+    la $a0, newline
+    li $v0, 4
+    syscall
+    
+    
+    j YtrainLOOP
+
+fimYtrainFunction:
+    lw $ra, 20($sp)
+    lw $a3, 16($sp)
+    lw $a1, 12($sp)
+    addi $sp, $sp, 24
+    jr $ra
+
+
+
 
 # Carrega o conteudo de um arquivo no buffer
 lerArquivo:
