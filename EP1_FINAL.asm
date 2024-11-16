@@ -1,168 +1,159 @@
+# Organizacao e Arquitetura de Computadores II - Exercicio Programa 1
+# Instrucoes: Mudar no .data os caminhos absolutos dos arquivos de entrada
+
 .data 
-    xTrain: .asciiz "Xtrain.txt" # Localizacao do arquivo de entrada (x) do conjunto de treino
-    xTest: .asciiz "Xtest.txt"  # Localizacao do arquivo de entrada (x) do conjunto de teste
-    yTrain: .asciiz "Ytrain.txt" # Localizacao do arquivo de entrada (y) do conjunto de treino
-    yTest: .asciiz "Ytest.txt" # Localizacao do arquivo de entrada (y) do conjunto de teste
+    xTrain: .asciiz "H:/Meu Drive/4� Semestre/Organiza��o e Arquitetura de Computadores II/EPs/EP1/KNN-Asm-MIPS/Xtrain.txt" # Localizacao do arquivo de entrada (x) do conjunto de treino
+    #xTest: .asciiz "Xtest.txt"  # Localizacao do arquivo de entrada (x) do conjunto de teste
+    #yTrain: .asciiz "Ytrain.txt" # Localizacao do arquivo de entrada (y) do conjunto de treino
+    #yTest: .asciiz "Ytest.txt" # Localizacao do arquivo de entrada (y) do conjunto de teste
 
-    buffer: .space 200000
-
+    buffer: .space 1 # Buffer de 1 byte - usado para armazenar 1 caractere por vez
+   
     .align 3
     v_xTrain: .space 40000
     v_yTrain: .space 40000
     v_xTest: .space 40000
     v_yTest: .space 40000
-    
-    bufferSize: .word 200000
+   
     dezDouble: .double 10.0 
     zeroDouble: .double 0.0
     fimDouble: .double -1.0
     
-    temp: .space 8 # Variavel temporaria para armazenar valores
-    
-    #masValue: .double 999999999999999
+    # quebraLinha: .asciiz "\n" # Utilizada para testes
 
 .text
 .globl main
 
 main:
-    # Leitura dos arquivos - passa o caminho como parametro para a funcao lerArquivo
-    
+    # Leitura dos arquivos - passa o caminho como parametro para a funcao abreArquivo
     la $a0, xTrain
-    la $a3, v_xTrain
-    jal lerArquivo
+    la $a1, v_xTrain
+    jal abreArquivo
 
-    la $a0, yTest
-    la $a3, v_xTrain
-    jal escreverArquivo
-
-
-    #move $a0, $v0
-    #jal abrirArquivos
+    #la $a0, yTest
+    #la $a3, v_xTrain
+    #jal escreverArquivo
 
     j fim
 
-# Carrega o conteudo de um arquivo no buffer
-lerArquivo:
-    # Abre o arquivo cujo caminho esta em $a0
+# Abre o arquivo cujo caminho esta em $a0
+abreArquivo:
+    # Salva os parametros passados para a funcao para recuperacao posterior
+    addiu $s6, $a0, 0
+    addiu $s7, $a1, 0
+
+    la $s0, 0($a1) # Carrega em s0 o endereco do vetor onde serao armzenados os valores
+
     li $v0, 13
     li $a1, 0 # Flag 0: Read-only
     li $a2, 0 # Modo que libera as permissoes de acesso
     syscall # Salva o descritor do arquivo em v0 
-    addiu $a0, $v0, 0 # Move o descritor do arquivo (obtido com o syscall 13)
+    
+    addiu $s1, $v0, 0 # Salva o descritor do arquivo (obtido com o syscall 13) em s1
 
-    # Carrega o arquivo no buffer
+# Inicializa os registradores utilizados na leitura de cada numero
+inicializaNumero:
+   li $t0, 0 # Inicializa o registrador que ira armazenar o numero sendo lido
+   li $t2, 0 # Indicador  de se o digito sendo lido corresponde (1) ou nao (0) a uma casa decimal
+   li $t3, 0 # Contador de quantas casas decimais o numero possui
+   li $t4, 0 # Indicador de se o arquivo chegou ao final
+
+# Le um caractere do arquivo aberto
+leCaractere:
     li $v0, 14
+    addiu $a0, $s1, 0 # Copia o descritor do arquivo para a0
     la $a1, buffer # Endereco do buffer
-    lw $a2, bufferSize # Numero maximo de caracteres a serem lidos
-    syscall
-
-    # Fecha o arquivo
-    li $v0, 16
+    li $a2, 1 # Quantidade de caracteres lidos - le 1 caractere por vez
     syscall
     
-    # TESTE-Imprime o buffer
+    la $s2, buffer # Carrega o endereco do buffer em s1
+    
+    beqz $v0, fimArquivo
+    
+    # TESTE - Imprime o buffer
     #li $v0, 4
     #la $a0, buffer
     #syscall
 
-processarNum:
-    la $s0, ($a3) # Carrega o endereco do vetor onde os valores serao armazenados
-    la $s1, buffer # Carrega o buffer em si
-    li $t1, 0 # Inicializa o registrador que irá conter o número copiado
-    l.d $f10, dezDouble # Inicializa o registrador com 10.0 - NÃO PODE USAR,  TROCAR DEPOIS
-    l.d $f0, zeroDouble # Inicializa o registrador com 0.0 - NÃO PODE USAR, TROCAR DEPOIS
+# Verifica qual eh o caractere lido e determina o que deve ser feito
+processaCaractere:
+    lb $t1, 0($s2) # Carrega o primeiro byte do buffer em t1
     
-
+    beq $t1, '\r', fimNumero # Verifica se ha quebra de linha - finaliza a copia do numero
+    beq $t1, '\n', leCaractere # Verifica se ha quebra de linha - passa para a leitura do proximo caractere
+    beq $t1, '.', verificaDecimal # Verifica se ha um ponto que determina as casas decimais
+    
+# Converte um caractere em numero e atualiza o calculo do numero cmpleto
 copiaNumero:
-    lb $t0, 0($s1) # Carrega o primeiro byte do buffer em t0
+    subu $t1, $t1, 48 # Converte o caractere para inteiro - o caractere '0' equivale ao numero 48 da tabela ASCII
     
-    beqz $t0, fimNumero # Verifica se o arquivo chegou ao fim
-    beq $t0, '\r', fimNumero # Verifica se ha quebra de linha - finaliza a copia do numero
-    beq $t0, '\n', fimCaractere # Verifica se ha quebra de linha - finaliza a copia do numero
-    beq $t0, '.', adicionaDecimalCount # Verifica se ha um ponto que determina as casas decimais
-    
-    subu $t0, $t0, 48 # Converte o caractere para inteiro - o caractere '0' equivale ao n�mero 48 da tabela ASCII
-    
-    mul $t1, $t1, 10 # Multiplica o inteiro anteriormente armazenado por 10 (ha deslocamento de uma casa decimal)
-    add $t1, $t1, $t0 # Adiciona o digito atual
+    mul $t0, $t0, 10 # Multiplica o inteiro anteriormente armazenado (o que foi lido ate entao) por 10 - aumenta em um a ordem numerica
+    add $t0, $t0, $t1 # Soma o digito atual ao numero completo que esta sendo lido
 
     beq $t2, 1, leituraDecimal # Verifica se o digito sendo lido corresponde a uma casa decimal
 
-    j fimCaractere
+    j leCaractere
 
-adicionaDecimalCount:
-    li $t2, 1 # Atualiza o indicador das casas decimais
-    li $t3, 0 # Inicializa o contador de casas decimais
-    
+# Digito sendo lido corresponde a uma casa decimal
 leituraDecimal:
     addi $t3, $t3, 1 # Incrementa o contador de casas decimais
+    j leCaractere
 
-    j fimCaractere
-
-fimCaractere:
-    addiu $s1, $s1, 1 # Avança o buffer para o próximo byte
-    j copiaNumero # Vai para a próxima iteração do loop
+# Apos ler um '.', indica que os proximos digitos serao as casas decimais
+verificaDecimal:
+    li $t2, 1 # Atualiza o indicador das casas decimais
+    j leCaractere
 
 fimNumero:
-    # Converte o número para double
-    mtc1 $t1, $f2
-    cvt.d.w $f2, $f2
+    # Converte o numero para double
+    mtc1 $t0, $f0 # Move o numero para o coprocessador utilizado para operacoes com double
+    cvt.d.w $f0, $f0 # Transforma o numero inteiro no equivalente em double
     
-    li $t4, 1 # Inicializa a variável do controle do loop a seguir
-
+    li $t5, 0 # Inicializa a variavel de controle do loop a seguir
+    ldc1 $f10, dezDouble # Carrega a constante 10.0 (double) em f10, utilizada para c�lculos
+    
+    beqz $t3, pulaLoopConversao
+    
+    # Realiza uma divisao do numero por 10 a cada decimal existente
     loopConversao:
-        addiu $t4, $t4, 1
-        div.d $f2, $f2, $f10
-        bne $t4, $t3, loopConversao # Executa a divisao de acordo com a quantidade de casas decimais do digito em questao
+        addiu $t5, $t5, 1
+        div.d $f0, $f0, $f10
+        bne $t5, $t3, loopConversao
     
-    s.d $f2, 0($s0) # Guarda o valor no vetor
-    
-
-    # TESTE-Imprime o valor
-    #move $a0, $s0 # We can pass the address of the array element that contains the double value
-    #l.d $f12, 0($a0) # Load the double value from memory to $f12
-    #li $v0, 3 # Syscall code for printing a floating-point number
-    #syscall
-
-
-    addiu $s0, $s0, 8 # Avança para a próxima posição do vetor
-
-    # Redefine as variáveis
-    li $t1, 0
-    li $t2, 0
-    li $t3, 0
-    l.d $f0, zeroDouble
-    l.d $f2, zeroDouble
-
-    beqz $t0, fimArquivo # Verifica se o arquivo chegou ao fim
-
-    j fimCaractere # Avança para o próximo número
-
-fimArquivo:
-    l.d $f2, fimDouble
-    s.d $f2, 0($s0) # Guarda o valor no vetor
-
-    # TESTE-Imprime o valor (só para o -1)
-
-    #move $a0, $s0
-    #l.d $f12, 0($a0)
+    pulaLoopConversao:
+    # TESTE - Imprime o numero
+    #ldc1 $f2, zeroDouble
+    #add.d $f12, $f0, $f2
     #li $v0, 3
     #syscall
-
-    la $t0, buffer
-    lw $t1, bufferSize
-
-    #Skippa o limpar buffer pra testes
-    jr $ra
-
-    limparBuffer:
-        sb $zero, 0($t0) # limpa o buffer
-        addiu $t0, $t0, 1
-        sub $t1, $t1, 1        
-        bne $t1, 0, limparBuffer
+    #la $a0, quebraLinha
+    #li $v0, 4
+    #syscall
     
-    jr $ra
+    s.d $f0, 0($s0) # Guarda o valor no vetor - PSEUDOINSTRUCAO, PRECISA ALTERAR
+    addiu $s0, $s0, 8 # Avanca para a proxima posicao do vetor
 
+    beq $t4, 1, fechaArquivo # Verifica se o arquivo chegou ao fim
+    j inicializaNumero # Avanca para o proximo numero
+
+fimArquivo:
+    li $t4, 1 # Atualiza o indicador de fim do arquivo
+    j fimNumero # Finaliza o calculo do ultimo numero
+
+fechaArquivo:
+    l.d $f2, fimDouble # Valor indicador do fim do vetor
+    s.d $f2, 0($s0) # Guarda o valor no vetor
+    
+    # Fecha o arquivo
+    li $v0, 16
+    syscall
+    
+    # Recupera os valores dos parametros passados
+    addiu $a0, $s6, 0
+    addiu $a1, $s7, 0
+    
+    # Retorna para a funcao principal
+    jr $ra
 
 fim: 
     li $v0, 10
