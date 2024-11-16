@@ -10,11 +10,14 @@
     v_xTrain: .space 40000
     v_yTrain: .space 40000
     v_xTest: .space 40000
+    v_yTest: .space 40000
     
     bufferSize: .word 200000
     dezDouble: .double 10.0 
     zeroDouble: .double 0.0
     fimDouble: .double -1.0
+    
+    temp: .space 8 # Variavel temporaria para armazenar valores
     
     #masValue: .double 999999999999999
 
@@ -28,17 +31,9 @@ main:
     la $a3, v_xTrain
     jal lerArquivo
 
-    #la $a0, xTest
-    #la $a3, v_xTest
-    #jal lerArquivo
-
-    #la $a0, yTrain
-    #la $a3, v_yTrain
-    #jal lerArquivo
-
-    #la $s0, v_xTrain
-    #la $s1, v_yTrain
-    #la $s2, v_xTest
+    la $a0, yTest
+    la $a3, v_xTrain
+    jal escreverArquivo
 
 
     #move $a0, $v0
@@ -81,7 +76,7 @@ processarNum:
 copiaNumero:
     lb $t0, 0($s1) # Carrega o primeiro byte do buffer em t0
     
-    beqz $t0, fimArquivo # Verifica se o arquivo chegou ao fim
+    beqz $t0, fimNumero # Verifica se o arquivo chegou ao fim
     beq $t0, '\r', fimNumero # Verifica se ha quebra de linha - finaliza a copia do numero
     beq $t0, '\n', fimCaractere # Verifica se ha quebra de linha - finaliza a copia do numero
     beq $t0, '.', adicionaDecimalCount # Verifica se ha um ponto que determina as casas decimais
@@ -138,15 +133,27 @@ fimNumero:
     li $t3, 0
     l.d $f0, zeroDouble
     l.d $f2, zeroDouble
-    
+
+    beqz $t0, fimArquivo # Verifica se o arquivo chegou ao fim
+
     j fimCaractere # Avança para o próximo número
-      
+
 fimArquivo:
     l.d $f2, fimDouble
     s.d $f2, 0($s0) # Guarda o valor no vetor
 
+    # TESTE-Imprime o valor (só para o -1)
+
+    #move $a0, $s0
+    #l.d $f12, 0($a0)
+    #li $v0, 3
+    #syscall
+
     la $t0, buffer
     lw $t1, bufferSize
+
+    #Skippa o limpar buffer pra testes
+    jr $ra
 
     limparBuffer:
         sb $zero, 0($t0) # limpa o buffer
@@ -155,6 +162,7 @@ fimArquivo:
         bne $t1, 0, limparBuffer
     
     jr $ra
+
 
 fim: 
     li $v0, 10
