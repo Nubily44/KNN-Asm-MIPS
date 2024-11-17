@@ -18,7 +18,7 @@
     XTEST: .asciiz "\n\n\n\n\n X TEST \n\n\n\n\n"
     YTEST: .asciiz "\n\n\n\n\n Y TEST \n\n\n\n\n"
     
-    tamVetor: .word 480
+    tamVetor: .word 479
     
     .align 3
     v_xTrain: .space 40000
@@ -31,10 +31,10 @@
     zeroDouble: .double 0.0
     fimDouble: .double -1.0
 
-    w: .word 3 # w é o tamanho da coluna.
+    w: .word 5 # w Ã© o tamanho da coluna.
     h: .word 1 
-    k: .word 2 # k é o número de vizinhos
-    # quantidade de espaços de memoria alocados a cada matriz baseada em seu tamanho: ([244^2]*8)
+    k: .word 2 # k Ã© o nÃºmero de vizinhos
+    # quantidade de espaÃ§os de memoria alocados a cada matriz baseada em seu tamanho: ([244^2]*8)
     tamLinha: .word 476
     m_xTrain: .space 500000
     m_xTest: .space 500000
@@ -63,21 +63,21 @@ main:
 
     addi $sp, $sp, -16   # reserva espaço para 4 palavras (4 * 4 bytes)
     sw $ra, 8($sp)      # salva o registrador de retorno (link) na pilha
-    sw $a1, 0($sp)       # salva $a1 na pilha
+    sw $s3, 0($sp)       # salva $a1 na pilha
 
-    la $a1,  m_xTrain
-    jal carregaMatriz
+    la $s3,  m_xTrain
+    jal carregaMatriz_xTrain
 
     ##################################################
     # Recupera os valores salvos na pilha
 
-    lw $a1, 0($sp)       # restaura $a1
+    lw $s3, 0($sp)       # restaura $a1
     lw $ra, 8($sp)      # restaura $ra
     addi $sp, $sp, 16    # libera o espaço alocado na pilha
     
     addi $sp, $sp, -16   # reserva espaço para 4 palavras (4 * 4 bytes)
     sw $ra, 8($sp)      # salva o registrador de retorno (link) na pilha
-    sw $a1, 0($sp)       # salva $a1 na pilha
+    sw $s4, 0($sp)       # salva $a1 na pilha
     
     ##################################################
     # Cálculo e print do YTrain
@@ -86,88 +86,73 @@ main:
     li $v0, 4       # printa o título do YTRAIN
     syscall
 
-    la $a1, v_yTrain
+    la $s4, v_yTrain
     jal carregaY
 
     ##################################################
     # Retorma os valores salvos na pilha
 
-    lw $a1, 0($sp)       # restaura $a1
+    lw $s4, 0($sp)       # restaura $a1
     lw $ra, 8($sp)      # restaura $ra
     addi $sp, $sp, 16    # libera o espaço alocado na pilha
 
     addi $sp, $sp, -16   # reserva espaço para 4 palavras (4 * 4 bytes)
     sw $ra, 8($sp)      # salva o registrador de retorno (link) na pilha
-    sw $a1, 0($sp)       # salva $a1 na pilha
+    sw $s5, 0($sp)       # salva $a1 na pilha
     
-
-
-
-
-    ##########################  TEST   #########################################
+    ##################################################
     # Leitura do XTest
 
     la $a0, XTEST
-    li $v0, 4       # printa o título do XTEST
+    li $v0, 4       # printa o tÃ­tulo do XTEST
     syscall
 
     la $a0, xTest
-    la $a1, v_xTest     # Le o arquivo de entrada (x) do conjunto de teste
+    la $s5, v_xTest     # Le o arquivo de entrada (x) do conjunto de teste
     jal abreArquivo
 
     ##################################################
     # Cria a matriz de teste
 
-    addi $sp, $sp, -16   # reserva espaço para 4 palavras (4 * 4 bytes)
+    addi $sp, $sp, -16   # reserva espaÃ§o para 4 palavras (4 * 4 bytes)
     sw $ra, 8($sp)      # salva o registrador de retorno (link) na pilha
-    sw $a1, 0($sp)       # salva $a1 na pilha
+    sw $s5, 0($sp)       # salva $s5 na pilha
 
-    la $a1,  m_xTest
-    jal carregaMatriz
-
-    ##################################################
-    # Recupera os valores salvos na pilha
-
-    lw $a1, 0($sp)       # restaura $a1
-    lw $ra, 8($sp)      # restaura $ra
-    addi $sp, $sp, 16    # libera o espaço alocado na pilha
-    
-    addi $sp, $sp, -16   # reserva espaço para 4 palavras (4 * 4 bytes)
-    sw $ra, 8($sp)      # salva o registrador de retorno (link) na pilha
-    sw $a1, 0($sp)       # salva $a1 na pilha
-    
-    ##################################################
-    # Cálculo e print do YTrain
-
-    la $a0, YTEST
-    li $v0, 4       # printa o título do YTEST
-    syscall
-
-    la $a1, v_yTest
-    jal carregaY
+    la $s5,  m_xTest
+    jal carregaMatriz_xTest
     
     ##################################################
     # Retorma os valores salvos na pilha
 
-    lw $a1, 0($sp)       # restaura $a1
+    lw $s5, 0($sp)       # restaura $a1
     lw $ra, 8($sp)      # restaura $ra
-    addi $sp, $sp, 16    # libera o espaço alocado na pilha
-
-
-
+    addi $sp, $sp, 16    # libera o espaÃ§o alocado na pilha
 
 
     ##########################     KNN     #####################################
 
 
-
-
+    knn:
+    
+    li $t1, 0 # i = 0
+    li $t2, 0
+    lw $t3, k
+    
+loop_knn:
+    slt $t0, $t1, $t2 
+    beq $t0, $zero, fim_knn
+    
+    lw $t2, tamLinha
+    sll $t2, $t2, 3
+    
+fim_knn:
 
 
 
 
 
     ##########################  ESCRITA   ######################################
+    
     # Escrita do YTest
 
     la $a0, yTest
@@ -176,9 +161,9 @@ main:
 
     j fim
 
-carregaMatriz:
+carregaMatriz_xTrain:
 
-    # Salva o endereço de retorno
+    # Salva o endereÃ§o de retorno
     addi $sp, $sp, -4
     sw $ra, 0($sp)
     li $t0, 0           # i = 0
@@ -186,35 +171,36 @@ L1:
     lw $t2, tamLinha   # Carrega o tamanho da matriz
     lw $t8, w
     slt $t3, $t0, $t2   # se i < tamMatriz, continua
-    beq $t3, $zero, imprimirMatriz  # Alterado para ir para impressão depois de carregar
+    beq $t3, $zero, imprimirMatriz  # Alterado para ir para impressÃ£o depois de carregar
     
     li $t1, 0           # j = 0
 L2:
     slt $t3, $t1, $t8   # se j < w
     beq $t3, $zero, proximaLinha
     
-    # Calcula o endereço na matriz: base + (i * tamMatriz + j) * 8
+    # Calcula o endereÃ§o na matriz: base + (i * tamMatriz + j) * 8
     mul $t4, $t0, $t2   # t4 = i * linha
     addu $t4, $t4, $t1  # t4 = i * tamMatriz + j
     sll $t4, $t4, 3     # multiplica por 8 (tamanho do double)
-    addu $t4, $a1, $t4  # endereço final = base + offset
+    addu $t4, $s3, $t4  # endereÃ§o final = base + offset
     
-    # Calcula o endereço no vetor:
-    addu $t6, $t0,$t1 # i+j para o endereço do vetor 
-    sll $t6, $t6, 3 # multiplica essa soma por 8, para o endereço em byte (0+0) * 8 =0, 1+0 * 8 = 8 ... etc
-    addu $t6, $a3,$t6 # endereço base do vetor somado baseado nas contas feitas.
+    # Calcula o endereÃ§o no vetor:
+    addu $t6, $t0,$t1 # i+j para o endereÃ§o do vetor 
+    sll $t6, $t6, 3 # multiplica essa soma por 8, para o endereÃ§o em byte (0+0) * 8 =0, 1+0 * 8 = 8 ... etc
+    addu $t6, $a3,$t6 # endereÃ§o base do vetor somado baseado nas contas feitas.
 
     # Carrega e salva o valor
     ldc1 $f2, 0($t6)     # carrega do vetor
     sdc1 $f2, 0($t4)     # salva na matriz
     
     addiu $t1, $t1, 1   # j++
-    j L2
+    j L2    
     
 proximaLinha:
     addiu $t0, $t0, 1   # i++
-    j L1
-
+    j L1    
+    
+# Impressão da Matriz xTrain
 imprimirMatriz:
     li $t0, 0           # i = 0
 L1_print:
@@ -227,18 +213,18 @@ L2_print:
     slt $t3, $t1, $t8   # se j < w
     beq $t3, $zero, proximaLinha_print
     
-    # Calcula o endereço na matriz novamente
+    # Calcula o endereÃ§o na matriz novamente
     mul $t4, $t0, $t2   # t4 = i * tamMatriz
     addu $t4, $t4, $t1  # t4 = i * tamMatriz + j
     sll $t4, $t4, 3     # multiplica por 8 (tamanho do double)
-    addu $t4, $a1, $t4  # endereço final = base + offset
+    addu $t4, $s3, $t4  # endereÃ§o final = base + offset
     
     # Carrega e imprime o valor
-    ldc1 $f12, 0($t4)    # carrega o valor em f12 para impressão
-    li $v0, 3           # código para imprimir double
+    ldc1 $f12, 0($t4)    # carrega o valor em f12 para impressÃ£o
+    li $v0, 3           # cÃ³digo para imprimir double
     syscall
     
-    # Imprime um espaço
+    # Imprime um espaÃ§o
     li $v0, 4
     la $a0, espaco
     syscall
@@ -256,12 +242,97 @@ proximaLinha_print:
     j L1_print
 
 fimImpressao:
+    lw $ra, 0($sp)      # Restaura o endereÃ§o de retorno
+    addiu $sp, $sp, 4
+    jr $ra              # retornaÂ paraÂ oÂ caller
+
+# Carrega xTest
+carregaMatriz_xTest:
+
+    # Salva o endereÃ§o de retorno
+    addi $sp, $sp, -4
+    sw $ra, 0($sp)
+    li $t0, 0           # i = 0
+L1_xTest:
+    lw $t2, tamLinha   # Carrega o tamanho da matriz
+    lw $t8, w
+    slt $t3, $t0, $t2   # se i < tamMatriz, continua
+    beq $t3, $zero, imprimirMatriz_xTest  # Alterado para ir para impressÃ£o depois de carregar
+    
+    li $t1, 0           # j = 0
+L2_xTest:
+    slt $t3, $t1, $t8   # se j < w
+    beq $t3, $zero, proximaLinha_xTest
+    
+    # Calcula o endereÃ§o na matriz: base + (i * tamMatriz + j) * 8
+    mul $t4, $t0, $t2   # t4 = i * linha
+    addu $t4, $t4, $t1  # t4 = i * tamMatriz + j
+    sll $t4, $t4, 3     # multiplica por 8 (tamanho do double)
+    addu $t4, $s5, $t4  # endereÃ§o final = base + offset
+    
+    # Calcula o endereÃ§o no vetor:
+    addu $t6, $t0,$t1 # i+j para o endereÃ§o do vetor 
+    sll $t6, $t6, 3 # multiplica essa soma por 8, para o endereÃ§o em byte (0+0) * 8 =0, 1+0 * 8 = 8 ... etc
+    addu $t6, $a3,$t6 # endereÃ§o base do vetor somado baseado nas contas feitas.
+
+    # Carrega e salva o valor
+    ldc1 $f2, 0($t6)     # carrega do vetor
+    sdc1 $f2, 0($t4)     # salva na matriz
+    
+    addiu $t1, $t1, 1   # j++
+    j L2_xTest
+    
+proximaLinha_xTest:
+    addiu $t0, $t0, 1   # i++
+    j L1_xTest
+
+# Impressão da Matriz xTrain
+imprimirMatriz_xTest:
+    li $t0, 0           # i = 0
+L1_print_xTest:
+    lw $t2, tamLinha   # Carrega o tamanho da matriz
+    slt $t3, $t0, $t2   # se i < tamMatriz, continua
+    beq $t3, $zero, fimImpressao_xTest
+    
+    li $t1, 0           # j = 0
+L2_print_xTest:
+    slt $t3, $t1, $t8   # se j < w
+    beq $t3, $zero, proximaLinha_print_xTest
+    
+    # Calcula o endereÃ§o na matriz novamente
+    mul $t4, $t0, $t2   # t4 = i * tamMatriz
+    addu $t4, $t4, $t1  # t4 = i * tamMatriz + j
+    sll $t4, $t4, 3     # multiplica por 8 (tamanho do double)
+    addu $t4, $s5, $t4  # endereÃ§o final = base + offset
+    
+    # Carrega e imprime o valor
+    ldc1 $f12, 0($t4)    # carrega o valor em f12 para impressÃ£o
+    li $v0, 3           # cÃ³digo para imprimir double
+    syscall
+    
+    # Imprime um espaÃ§o
+    li $v0, 4
+    la $a0, espaco
+    syscall
+    
+    addiu $t1, $t1, 1   # j++
+    j L2_print_xTest
+
+proximaLinha_print_xTest:
+    # Imprime uma quebra de linha
+    li $v0, 4
+    la $a0, newline
+    syscall
+    
+    addiu $t0, $t0, 1   # i++
+    j L1_print_xTest
+
+fimImpressao_xTest:
     lw $ra, 0($sp)      # Restaura o endereço de retorno
     addiu $sp, $sp, 4
     jr $ra              # retorna para o caller
 
-
-# Função que carrega o Ytrain.
+# FunÃ§Ã£o que carrega o Ytrain.
 carregaY:
     
     li $t0, 0           # i = 0
@@ -274,7 +345,7 @@ yLOOP:
     slt $t1, $t0, $t3   # comparando i com tamanho do vetor - w
     beq $t1, $zero, fimYFunction
 
-    # Debug: imprime índice atual
+    # Debug: imprime Ã­ndice atual
     li $v0, 1
     move $a0, $t0
     syscall
@@ -282,14 +353,14 @@ yLOOP:
     li $v0, 4
     syscall
 
-    # Calcula índices e carrega valores
+    # Calcula Ã­ndices e carrega valores
     addu $t2, $t8, $t0  # x + w
     sll $t4, $t2, 3     # (i + w) * 8
-    addu $t4, $a3, $t4  # endereço [i + w] * 8
+    addu $t4, $a3, $t4  # endereÃ§o [i + w] * 8
     ldc1 $f8, 0($t4)     # carrega valor de xTrain
     
     sll $t5, $t0, 3     # i * 8
-    addu $t5, $t5, $a1  # endereço base yTrain + offset
+    addu $t5, $t5, $s4  # endereÃ§o base yTrain + offset
     sdc1 $f8, 0($t5)     # salva valor em yTrain[i]
     
     # Imprime o valor salvo
@@ -308,7 +379,6 @@ yLOOP:
 
 fimYFunction:
     jr $ra
-
 
 
 
@@ -387,7 +457,7 @@ fimNumero:
     cvt.d.w $f0, $f0 # Transforma o numero inteiro no equivalente em double
     
     li $t5, 0 # Inicializa a variavel de controle do loop a seguir
-    ldc1 $f10, dezDouble # Carrega a constante 10.0 (double) em f10, utilizada para cálculos
+    ldc1 $f10, dezDouble # Carrega a constante 10.0 (double) em f10, utilizada para cÃ¡lculos
     
     beqz $t3, pulaLoopConversao
     
@@ -448,7 +518,7 @@ escreverArquivo:
 escrita:
     ldc1 $f2, 0($s0)
     ldc1 $f4, fimDouble
-    c.eq.d $f2, $f4 # Verifica se o array acabou de ser lido (-1.0 é a sentinela)
+    c.eq.d $f2, $f4 # Verifica se o array acabou de ser lido (-1.0 Ã© a sentinela)
     bc1t fimEscrita # Se sim, finaliza a escrita
 
 
@@ -482,7 +552,7 @@ escrita:
 
         la $a3, numero 
         add $a3, $a3, $t5 # Atualiza o endereco do ponteiro do numero
-        add $a3, $a3, -1 # Volta uma posicao para ajustar a posição do ponteiro (uma anterior do contador de digitos)
+        add $a3, $a3, -1 # Volta uma posicao para ajustar a posiÃ§Ã£o do ponteiro (uma anterior do contador de digitos)
 
         
         
@@ -500,13 +570,13 @@ escrita:
     
     escreverPonto:
         li $t4, 46 # ASCII do ponto
-        sb $t4, 0($s1) # Armazena o ponto no array temporário de números
-        addi $s1, $s1, 1 # Avança o ponteiro
+        sb $t4, 0($s1) # Armazena o ponto no array temporÃ¡rio de nÃºmeros
+        addi $s1, $s1, 1 # AvanÃ§a o ponteiro
         addi $t5, $t5, 1 # Incrementa o contador de digitos
         j loopConversaoEscrita # Volta para a conversao de digitos
 
 proximoNumeroEscrita:
-    addiu $s0, $s0, 8  # Avança para o próximo número
+    addiu $s0, $s0, 8  # AvanÃ§a para o prÃ³ximo nÃºmero
     lb $t4, newline # Adiciona uma quebra de linha
     sb $t4, 0($s1) 
 
